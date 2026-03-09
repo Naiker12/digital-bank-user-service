@@ -1,4 +1,4 @@
-# Python
+# Python Cache y Artefactos
 __pycache__/
 *.py[cod]
 *$py.class
@@ -21,17 +21,47 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
+# Entornos Virtuales
 venv/
 ENV/
+.env/
+.venv/
+env.bak/
+venv.bak/
 
-# Environment Variables
+# Variables de entorno y credenciales (Archivos Delicados)
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+certs/
 
-# IDEs
+# IDEs y Editores
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# OS
+# OS File System
 .DS_Store
 Thumbs.db
+
+# Infraestructura local / Terraform y Cache
+.pytest_cache/
+.coverage
+htmlcov/
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Serverless / AWS SAM
+.serverless/
+.aws-sam/
