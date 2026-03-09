@@ -1,62 +1,78 @@
 import json
 import boto3
-import uuid
 import os
-from passlib.hash import pbkdf2_sha256
+import uuid
+import hashlib
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table(os.getenv('USERS_TABLE', 'bank-users'))
 sqs = boto3.client('sqs')
+table = dynamodb.Table(os.getenv('USERS_TABLE', 'bank-users'))
+queue_url = os.getenv('CARD_QUEUE_URL')
+notification_queue_url = os.getenv('NOTIFICATION_QUEUE_URL')
 
 def handler(event, context):
     try:
         body = json.loads(event.get('body', '{}'))
         user_uuid = str(uuid.uuid4())
         
-        # Guardamos el documento como clave obligatoria (Sort Key)
+        # 🔐 Password Encryption
+        password_hash = hashlib.sha256(body['password'].encode()).hexdigest()
+        
         user_item = {
             'uuid': user_uuid,
             'document': str(body['document']),
             'name': body['name'],
             'lastName': body['lastName'],
             'email': body['email'],
-            'password': pbkdf2_sha256.hash(body['password']),
-            'status': 'ACTIVE',
-            'createdAt': str(uuid.uuid1()) # Timestamp o ID único para orden
+            'password': password_hash,
+            'address': '',
+            'phone': '',
+            'avatarUrl': ''
         }
         
         table.put_item(Item=user_item)
         
-        # Enviamos a la cola para crear tarjetas (Card Service)
+        # 💳 Solicitar tarjeta de DÉBITO
         sqs.send_message(
-            QueueUrl=os.getenv('CARD_QUEUE_URL'),
+            QueueUrl=queue_url,
             MessageBody=json.dumps({
-                'userId': user_uuid, 
-                'email': body['email'],
-                'name': body['name'],
-                'lastName': body['lastName']
+                'userId': user_uuid,
+                'request': 'DEBIT'
             })
         )
         
-        return {
-            'statusCode': 201,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json'
-            },
-            'body': json.dumps({
-                'message': 'User registered successfully', 
-                'user_id': user_uuid,
-                'document': body['document']
+        # 💳 Solicitar tarjeta de CRÉDITO
+        sqs.send_message(
+            QueueUrl=queue_url,
+            MessageBody=json.dumps({
+                'userId': user_uuid,
+                'request': 'CREDIT'
             })
-        }
+        )
+
+        # 📧 Notificación de Bienvenida
+        if notification_queue_url:
+            sqs.send_message(
+                QueueUrl=notification_queue_url,
+                MessageBody=json.dumps({
+                    'type': 'USER.REGISTER',
+                    'data': {
+                        'userId': user_uuid,
+                        'name': body['name'],
+                        'document': body['document'],
+                        'email': body['email']
+                    }
+                })
+            )
+
+        return build_response(201, {'userId': user_uuid, 'message': 'User registered and cards requested'})
+
     except Exception as e:
-        print(f"Error: {str(e)}")
-        return {
-            'statusCode': 500,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json'
-            },
-            'body': json.dumps({'error': str(e)})
-        }
+        return build_response(500, {'error': str(e)})
+
+def build_response(status, body):
+    return {
+        'statusCode': status,
+        'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+        'body': json.dumps(body)
+    }

@@ -2,14 +2,14 @@ import json
 import boto3
 import os
 import datetime
-from passlib.hash import pbkdf2_sha256
+import hashlib
 from jose import jwt
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table(os.getenv('USERS_TABLE', 'user-table'))
+table = dynamodb.Table(os.getenv('USERS_TABLE', 'bank-users'))
 sqs = boto3.client('sqs')
 
-SECRET_KEY = os.getenv('JWT_SECRET', 'supersecretkey')
+SECRET_KEY = os.getenv('JWT_SECRET', 'super-secret-bank-key-2026')
 ALGORITHM = "HS256"
 NOTIFICATION_QUEUE_URL = os.getenv('NOTIFICATION_QUEUE_URL', '')
 
@@ -26,27 +26,25 @@ def handler(event, context):
         password = body.get('password')
 
         if not email or not password:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({'error': 'Missing credentials'})
-            }
+            return build_response(400, {'error': 'Email and password are required'})
 
-        # Disclaimer: Scanning is not recommended for production. Best practice is GSI over email.
+        # Hash the incoming password to compare
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+        # Simple scan to find user by email (For production use a GSI)
         response = table.scan()
         users = response.get('Items', [])
         db_user = next((u for u in users if u.get('email') == email), None)
 
-        if not db_user or not pbkdf2_sha256.verify(password, db_user.get('password', '')):
-            return {
-                'statusCode': 401,
-                'body': json.dumps({'error': 'Invalid email or password'})
-            }
+        if not db_user or db_user.get('password') != password_hash:
+            return build_response(401, {'error': 'Invalid credentials'})
 
         token = create_access_token({
             "user_id": db_user.get("uuid"),
             "email": db_user.get("email")
         })
 
+        # Notificación de Login
         if NOTIFICATION_QUEUE_URL:
             sqs.send_message(
                 QueueUrl=NOTIFICATION_QUEUE_URL,
@@ -60,15 +58,18 @@ def handler(event, context):
                 })
             )
 
-        return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'access_token': token,
-                'token_type': 'bearer'
-            })
-        }
+        return build_response(200, {
+            'access_token': token,
+            'token_type': 'bearer',
+            'user_id': db_user.get('uuid')
+        })
+
     except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': str(e)})
-        }
+        return build_response(500, {'error': str(e)})
+
+def build_response(status, body):
+    return {
+        'statusCode': status,
+        'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+        'body': json.dumps(body)
+    }
