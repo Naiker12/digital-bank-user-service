@@ -20,13 +20,14 @@ def handler(event, context):
         if not image_data:
             return build_response(400, {'error': 'No image data provided'})
 
-        # 🖼️ Generar nombre único para evitar duplicados (Requerimiento de diseño)
+        # 1. Generate unique file name
         file_extension = file_type.split('/')[-1]
         unique_name = f"{user_id}_{int(time.time())}_{uuid.uuid4().hex[:6]}"
         file_name = f"avatars/{unique_name}.{file_extension}"
         
         image_bytes = base64.b64decode(image_data)
 
+        # 2. Upload to S3
         s3.put_object(
             Bucket=bucket_name,
             Key=file_name,
@@ -36,7 +37,7 @@ def handler(event, context):
 
         avatar_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
 
-        # 🔍 Recuperar SK (document) para actualizar perfil
+        # 3. Update user profile with URL
         user_response = table.query(
             KeyConditionExpression=boto3.dynamodb.conditions.Key('uuid').eq(user_id)
         )

@@ -44,7 +44,7 @@ def handler(event, context):
             "email": db_user.get("email")
         })
 
-        # Notificación de Login
+        # 1. Notify login
         if NOTIFICATION_QUEUE_URL:
             sqs.send_message(
                 QueueUrl=NOTIFICATION_QUEUE_URL,

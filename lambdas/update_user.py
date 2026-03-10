@@ -16,8 +16,7 @@ def handler(event, context):
         address = body.get('address')
         phone = body.get('phone')
 
-        # 🔍 Paso 1: Obtener el documento del usuario (Sort Key)
-        # Usamos Query porque solo tenemos la partition key
+        # 1. Get user document (Sort Key)
         response = table.query(
             KeyConditionExpression=Key('uuid').eq(user_id)
         )
@@ -28,7 +27,7 @@ def handler(event, context):
             
         user_document = str(items[0]['document'])
 
-        # ✏️ Paso 2: Preparar actualización
+        # 2. Prepare update
         if not address and not phone:
             return build_response(400, {'error': 'No fields provided for update (address or phone)'})
 
@@ -44,7 +43,7 @@ def handler(event, context):
 
         update_expr = update_expr.rstrip(',')
 
-        # ✨ Paso 3: Actualizar con la clave completa
+        # 3. Execute update
         table.update_item(
             Key={
                 'uuid': str(user_id),

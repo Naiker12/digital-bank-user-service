@@ -15,7 +15,7 @@ def handler(event, context):
         body = json.loads(event.get('body', '{}'))
         user_uuid = str(uuid.uuid4())
         
-        # 🔐 Password Encryption
+        # 1. Password Encryption
         password_hash = hashlib.sha256(body['password'].encode()).hexdigest()
         
         user_item = {
@@ -32,7 +32,7 @@ def handler(event, context):
         
         table.put_item(Item=user_item)
         
-        # 💳 Solicitar tarjeta de DÉBITO
+        # 2. Request Debit Card
         sqs.send_message(
             QueueUrl=queue_url,
             MessageBody=json.dumps({
@@ -41,7 +41,7 @@ def handler(event, context):
             })
         )
         
-        # 💳 Solicitar tarjeta de CRÉDITO
+        # 3. Request Credit Card
         sqs.send_message(
             QueueUrl=queue_url,
             MessageBody=json.dumps({
@@ -50,7 +50,7 @@ def handler(event, context):
             })
         )
 
-        # 📧 Notificación de Bienvenida
+        # 4. Welcome Notification
         if notification_queue_url:
             sqs.send_message(
                 QueueUrl=notification_queue_url,

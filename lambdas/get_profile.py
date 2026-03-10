@@ -9,7 +9,7 @@ def handler(event, context):
     try:
         user_id = event.get('pathParameters', {}).get('user_id')
         
-        # Usamos Query porque solo tenemos el UUID y no el Document (Sort Key)
+        # 1. Fetch user by UUID using Query
         response = table.query(
             KeyConditionExpression=boto3.dynamodb.conditions.Key('uuid').eq(user_id)
         )
@@ -27,7 +27,7 @@ def handler(event, context):
             }
             
         user = items[0]
-        # Eliminamos la contraseña de la respuesta por seguridad
+        # 2. Remove password from response for security
         if 'password' in user:
             del user['password']
             
