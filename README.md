@@ -95,13 +95,13 @@ Run the FastAPI service locally using uvicorn:
 uvicorn app.main:app --reload
 ```
 
-### 5. Deployment Commands (Terraform)
-From the infrastructure directory:
+### 5. Deployment Commands (Independent Terraform)
+The infrastructure is now independent. To deploy:
+1. Ensure the `terraform.tfvars` file is configured with the shared infrastructure values (IAM Role, API Gateway).
+2. Run deployment:
 ```bash
-# Sync local lambdas to deployment package
-Copy-Item -Path "lambdas/*.py" -Destination "deployment_package/" -Force
-
-# Apply infrastructure changes
+cd terraform
+terraform init
 terraform apply -auto-approve
 ```
 
