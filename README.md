@@ -1,119 +1,116 @@
-# Bank User Service
+# Servicio de Usuarios (Bank User Service)
 
-This is the core microservice for **user management** in the banking platform. it provides robust capabilities for registration, authentication, profile management, and multimedia resource uploads (avatars), integrating natively with AWS services for high scalability and performance.
+Este es el microservicio central para la **gestión de usuarios** en la plataforma bancaria. Proporciona capacidades robustas para el registro, autenticación, gestión de perfiles y carga de recursos multimedia (avatares), integrándose nativamente con los servicios de AWS para un alto rendimiento y escalabilidad.
 
-## Core Technologies
+## Tecnologías Principales
 
-- **FastAPI:** High-performance web framework for Python.
-- **Python 3.11+:** Base programming language.
-- **AWS DynamoDB:** NoSQL key-value and document database for user profiles.
-- **AWS S3:** Object storage service for secure profile image storage.
-- **AWS Lambda:** Serverless computing for specific, scalable tasks.
+- **FastAPI:** Framework web de alto rendimiento para Python.
+- **Python 3.11+:** Lenguaje de programación base.
+- **AWS DynamoDB:** Base de datos NoSQL para perfiles de usuario.
+- **AWS S3:** Almacenamiento de objetos para imágenes de perfil seguras.
+- **AWS Lambda:** Computación serverless para tareas específicas y escalables.
 
-## Service Responsibilities
+## Responsabilidades del Servicio
 
-The **User Service** is responsible for the following critical operations:
+El **User Service** es responsable de las siguientes operaciones críticas:
 
-1. **User Registration:** Secure creation of new user accounts and triggering card requests via SQS.
-2. **Login / Authentication:** Identity verification and JWT token generation.
-3. **Profile Management:** Updating personal information and user preferences.
-4. **Avatar Upload:** Direct image uploads to S3 with profile URL updates.
-5. **Profile Query:** Fast retrieval of detailed user profile information.
+1. **Registro de Usuarios:** Creación segura de nuevas cuentas de usuario y activación de solicitudes de tarjetas vía SQS.
+2. **Login / Autenticación:** Verificación de identidad y generación de tokens JWT.
+3. **Gestión de Perfil:** Actualización de información personal y preferencias del usuario.
+4. **Carga de Avatares:** Carga directa de imágenes a S3 con actualización de la URL en el perfil.
+5. **Consulta de Perfil:** Recuperación rápida de información detallada del usuario.
 
-## Architecture and Project Structure
+## Arquitectura y Estructura del Proyecto
 
-The project follows a modular structure designed for scalability and maintainability:
+El proyecto sigue una estructura modular diseñada para la mantenibilidad:
 
 ```text
 bank-user-service
 │
-├── app                     # FastAPI application core
-│   ├── main.py             # Application entry point
-│   ├── routes              # API endpoint definitions
+├── app                     # Núcleo de la aplicación FastAPI
+│   ├── main.py             # Punto de entrada de la aplicación
+│   ├── routes              # Definición de endpoints de la API
 │   │   └── user_routes.py
-│   ├── services            # Encapsulated business logic
+│   ├── services            # Lógica de negocio encapsulada
 │   │   └── user_service.py
-│   ├── models              # Schema and data model definitions
+│   ├── models              # Definiciones de esquemas y modelos de datos
 │   │   └── user_model.py
-│   └── utils               # Utilities and client configurations
-│       ├── dynamodb.py     # DynamoDB client
-│       ├── s3.py           # AWS S3 client
-│       └── jwt.py          # JWT token management logic
+│   └── utils               # Utilidades y clientes
+│       ├── dynamodb.py     # Cliente DynamoDB
+│       ├── s3.py           # Cliente AWS S3
+│       └── jwt.py          # Lógica de gestión de tokens JWT
 │
-├── lambdas                 # Serverless Lambda functions
-│   ├── register_user.py    # Handles user registration and SQS card requests
-│   ├── login_user.py       # Handles authentication and login notifications
-│   ├── update_user.py      # Handles profile updates in DynamoDB
-│   ├── upload_avatar.py    # Handles S3 uploads and profile URL updates
-│   └── get_profile.py      # Handles profile retrieval by UUID
+├── lambdas                 # Funciones Lambda Serverless
+│   ├── register_user.py    # Maneja registro y solicitudes de tarjetas SQS
+│   ├── login_user.py       # Maneja autenticación y notificaciones de login
+│   ├── update_user.py      # Maneja actualizaciones en DynamoDB
+│   ├── upload_avatar.py    # Maneja cargas a S3 y actualización de URLs
+│   └── get_profile.py      # Maneja recuperación de perfiles por UUID
 │
-├── deployment_package      # Package for AWS Lambda deployment
-├── requirements.txt        # Project dependencies
-└── README.md               # Technical documentation
+├── deployment_package      # Paquete para despliegue en AWS Lambda
+├── requirements.txt        # Dependencias del proyecto
+└── README.md               # Documentación técnica
 ```
 
-## Implemented Lambdas
+## Lambdas Implementadas
 
-This service leverages the following Lambda functions for serverless task handling:
+Este servicio utiliza las siguientes funciones Lambda para el manejo de tareas serverless:
 
-- `register-user-lambda`: Secure registration and SQS event dispatch for card creation.
-- `login-user-lambda`: Credentials processing and login activity logging.
-- `update-user-lambda`: Modifying existing data records in DynamoDB.
-- `upload-avatar-lambda`: Processing image uploads and generating S3 URLs.
-- `get-profile-lambda`: High-speed retrieval of user profiles via Partition Key.
+- `register-user-lambda`: Registro seguro y envío de eventos SQS para creación de tarjetas.
+- `login-user-lambda`: Procesamiento de credenciales y registro de actividad de login.
+- `update-user-lambda`: Modificación de registros existentes en DynamoDB.
+- `upload-avatar-lambda`: Procesamiento de imágenes y generación de URLs de S3.
+- `get-profile-lambda`: Recuperación de alta velocidad de perfiles de usuario.
 
-## Installation and Execution Commands
+## Comandos de Instalación y Ejecución
 
-### 1. Virtual Environment Configuration
+### 1. Configuración del Entorno Virtual
 ```bash
-# Create virtual environment
+# Crear entorno virtual
 python -m venv venv
 
-# Activate on Windows
+# Activar en Windows
 .\venv\Scripts\activate
 ```
 
-### 2. Dependency Installation
+### 2. Instalación de Dependencias
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Environment Configuration
-Create a `.env` file in the project root:
+### 3. Configuración del Entorno
+Crea un archivo `.env` en la raíz del proyecto:
 ```env
 AWS_REGION=us-east-1
 USERS_TABLE=bank-users
-S3_BUCKET=bank-user-avatars-suffix
-JWT_SECRET=your-secret-key
-CARD_QUEUE_URL=create-request-card-sqs-url
-NOTIFICATION_QUEUE_URL=notification-email-sqs-url
+S3_BUCKET=nombre-del-bucket-avatars
+JWT_SECRET=tu-llave-secreta
+CARD_QUEUE_URL=url-de-la-cola-de-tarjetas
+NOTIFICATION_QUEUE_URL=url-de-la-cola-de-notificaciones
 ```
 
-### 4. Local Execution
-Run the FastAPI service locally using uvicorn:
+### 4. Ejecución Local
+Ejecuta el servicio FastAPI localmente:
 ```bash
 uvicorn app.main:app --reload
 ```
 
-### 5. Deployment Commands (Independent Terraform)
-The infrastructure is now independent. To deploy:
-1. Ensure the `terraform.tfvars` file is configured with the shared infrastructure values (IAM Role, API Gateway).
-2. Run deployment:
+### 5. Comandos de Despliegue (Terraform Independiente)
+La infraestructura ahora es independiente. Para desplegar:
+1. Asegúrate de que el archivo `terraform.tfvars` esté configurado con los valores de infraestructura compartida (IAM Role, API Gateway).
+2. Ejecuta el despliegue:
 ```bash
 cd terraform
 terraform init
 terraform apply -auto-approve
 ```
 
-## API Documentation
+## Documentación de la API
 
-| Method | Endpoint | Description | Auth Required |
+| Método | Endpoint | Descripción | Requiere Auth |
 | :--- | :--- | :--- | :---: |
-| `POST` | `/users/register` | Registers a new user and requests cards. | No |
-| `POST` | `/users/login` | Authenticates user and returns JWT. | No |
-| `GET` | `/users/profile/{user_id}` | Retrieves full user profile. | Yes |
-| `PUT` | `/users/profile/{user_id}` | Updates address or phone. | Yes |
-| `POST` | `/users/profile/{user_id}/avatar` | Uploads avatar to S3. | Yes |
-
----
-
+| `POST` | `/users/register` | Registra un nuevo usuario y solicita tarjeta. | No |
+| `POST` | `/users/login` | Autentica al usuario y retorna JWT. | No |
+| `GET` | `/users/profile/{user_id}` | Recupera el perfil completo del usuario. | Sí |
+| `PUT` | `/users/profile/{user_id}` | Actualiza dirección o teléfono. | Sí |
+| `POST` | `/users/profile/{user_id}/avatar` | Carga el avatar a S3. | Sí |
