@@ -2,7 +2,7 @@ provider "aws" {
   region = var.region
 }
 
-# 1. DynamoDB Tables
+
 resource "aws_dynamodb_table" "user_table" {
   name           = "bank-users"
   billing_mode   = "PAY_PER_REQUEST"
@@ -19,7 +19,7 @@ resource "aws_dynamodb_table" "user_table" {
   }
 }
 
-# 2. S3 Buckets
+
 resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
@@ -28,7 +28,7 @@ resource "aws_s3_bucket" "user_avatars" {
   bucket = "bank-user-avatars-${random_id.bucket_suffix.hex}"
 }
 
-# 3. Lambda Functions (Automated Deployment)
+
 data "archive_file" "user_service_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../deployment_package"
@@ -48,8 +48,8 @@ resource "aws_lambda_function" "register_user" {
     variables = {
       USERS_TABLE            = aws_dynamodb_table.user_table.name
       # URLs are hardcoded as in the original for now (to avoid dependency loops)
-      CARD_QUEUE_URL         = "create-request-card-sqs"
-      NOTIFICATION_QUEUE_URL = "notification-email-sqs"
+      CARD_QUEUE_URL         = var.card_queue_url
+      NOTIFICATION_QUEUE_URL = var.notification_queue_url
       DEPLOY_TIMESTAMP       = "20260309_2210"
     }
   }
@@ -67,8 +67,8 @@ resource "aws_lambda_function" "login_user" {
   environment {
     variables = {
       USERS_TABLE            = aws_dynamodb_table.user_table.name
-      JWT_SECRET             = "super-secret-bank-key-2026"
-      NOTIFICATION_QUEUE_URL = "notification-email-sqs"
+      JWT_SECRET             = var.jwt_secret
+      NOTIFICATION_QUEUE_URL = var.notification_queue_url
     }
   }
 }
@@ -85,7 +85,7 @@ resource "aws_lambda_function" "get_profile" {
   environment {
     variables = {
       USERS_TABLE = aws_dynamodb_table.user_table.name
-      JWT_SECRET  = "super-secret-bank-key-2026"
+      JWT_SECRET  = var.jwt_secret
     }
   }
 }
@@ -102,7 +102,7 @@ resource "aws_lambda_function" "update_user" {
   environment {
     variables = {
       USERS_TABLE = aws_dynamodb_table.user_table.name
-      JWT_SECRET  = "super-secret-bank-key-2026"
+      JWT_SECRET  = var.jwt_secret
     }
   }
 }
@@ -120,12 +120,12 @@ resource "aws_lambda_function" "upload_avatar" {
     variables = {
       USERS_TABLE = aws_dynamodb_table.user_table.name
       S3_BUCKET   = aws_s3_bucket.user_avatars.id
-      JWT_SECRET  = "super-secret-bank-key-2026"
+      JWT_SECRET  = var.jwt_secret
     }
   }
 }
 
-# 4. API Integrations
+
 resource "aws_apigatewayv2_integration" "register" {
   api_id           = var.api_gateway_id
   integration_type = "AWS_PROXY"
@@ -186,7 +186,7 @@ resource "aws_apigatewayv2_route" "upload_avatar_route" {
   target    = "integrations/${aws_apigatewayv2_integration.upload_avatar.id}"
 }
 
-# 5. Permissions
+
 resource "aws_lambda_permission" "api_gw_register" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
