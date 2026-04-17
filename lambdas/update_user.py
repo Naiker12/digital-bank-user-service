@@ -1,68 +1,25 @@
 import json
-import boto3
-import os
-from boto3.dynamodb.conditions import Key
-
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table(os.getenv('USERS_TABLE', 'bank-users'))
+from app.services.user_service import update_user_profile
 
 def handler(event, context):
     try:
         user_id = event.get('pathParameters', {}).get('user_id')
-        if not user_id:
-            return build_response(400, {'error': 'User ID is missing in path'})
-
         body = json.loads(event.get('body', '{}'))
-        address = body.get('address')
-        phone = body.get('phone')
 
-        # 1. Get user document (Sort Key)
-        response = table.query(
-            KeyConditionExpression=Key('uuid').eq(user_id)
-        )
-        
-        items = response.get('Items', [])
-        if not items:
-            return build_response(404, {'error': f'User {user_id} not found'})
-            
-        user_document = str(items[0]['document'])
+        if not user_id:
+            return build_response(400, {'error': 'User ID is required'})
 
-        # 2. Prepare update
-        if not address and not phone:
-            return build_response(400, {'error': 'No fields provided for update (address or phone)'})
+        result = update_user_profile(user_id, body)
+        if not result:
+            return build_response(404, {'error': 'User not found'})
 
-        update_expr = "SET"
-        attr_values = {}
-        
-        if address:
-            update_expr += " address = :a,"
-            attr_values[':a'] = str(address)
-        if phone:
-            update_expr += " phone = :p,"
-            attr_values[':p'] = str(phone)
-
-        update_expr = update_expr.rstrip(',')
-
-        # 3. Execute update
-        table.update_item(
-            Key={
-                'uuid': str(user_id),
-                'document': user_document
-            },
-            UpdateExpression=update_expr,
-            ExpressionAttributeValues=attr_values,
-            ReturnValues="UPDATED_NEW"
-        )
-        
-        return build_response(200, {'message': 'Profile updated successfully'})
-
+        return build_response(200, result)
     except Exception as e:
-        print(f"Error updating user: {str(e)}")
         return build_response(500, {'error': str(e)})
 
-def build_response(status_code, body):
+def build_response(status, body):
     return {
-        'statusCode': status_code,
+        'statusCode': status,
         'headers': {
             'Access-Control-Allow-Origin': '*',
             'Content-Type': 'application/json'

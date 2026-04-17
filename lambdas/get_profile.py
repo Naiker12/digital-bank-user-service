@@ -1,51 +1,26 @@
 import json
-import boto3
-import os
-
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table(os.getenv('USERS_TABLE', 'bank-users'))
+from app.services.user_service import get_user_profile
 
 def handler(event, context):
     try:
         user_id = event.get('pathParameters', {}).get('user_id')
-        
-        # 1. Fetch user by UUID using Query
-        response = table.query(
-            KeyConditionExpression=boto3.dynamodb.conditions.Key('uuid').eq(user_id)
-        )
-        
-        items = response.get('Items', [])
-        
-        if not items:
-            return {
-                'statusCode': 404,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json'
-                },
-                'body': json.dumps({'error': 'User not found'})
-            }
-            
-        user = items[0]
-        # 2. Remove password from response for security
-        if 'password' in user:
-            del user['password']
-            
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json'
-            },
-            'body': json.dumps(user)
-        }
+        if not user_id:
+            return build_response(400, {'error': 'User ID is required'})
+
+        result = get_user_profile(user_id)
+        if not result:
+            return build_response(404, {'error': 'User not found'})
+
+        return build_response(200, result)
     except Exception as e:
-        print(f"Error: {str(e)}")
-        return {
-            'statusCode': 500,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json'
-            },
-            'body': json.dumps({'error': str(e)})
-        }
+        return build_response(500, {'error': str(e)})
+
+def build_response(status, body):
+    return {
+        'statusCode': status,
+        'headers': {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json'
+        },
+        'body': json.dumps(body)
+    }

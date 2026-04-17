@@ -1,12 +1,10 @@
 import boto3
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 dynamodb = boto3.resource(
     "dynamodb",
-    region_name=os.getenv("AWS_REGION")
+    region_name=os.getenv("AWS_REGION", "us-east-1")
 )
 
-table = dynamodb.Table(os.getenv("USERS_TABLE"))
+# No load_dotenv() - environment variables must be provided by the runtime
+table = dynamodb.Table(os.getenv("USERS_TABLE", "bank-users"))
