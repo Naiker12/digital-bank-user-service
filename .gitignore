@@ -48,6 +48,7 @@ certs/
 Thumbs.db
 
 # Infraestructura local / Terraform y Cache
+terraform/
 .pytest_cache/
 .coverage
 htmlcov/

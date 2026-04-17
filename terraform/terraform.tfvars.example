@@ -1,4 +1,0 @@
-# RELLENA ESTOS VALORES DESPUÉS DE EJECUTAR EL TERRAFORM EN bank-infra-shared
-# lambda_role_arn          = "arn:aws:iam::123456789012:role/bank_lambda_execution_role"
-# api_gateway_id           = "abc123def"
-# api_gateway_execution_arn = "arn:aws:execute-api:us-east-1:123456789012:abc123def"
