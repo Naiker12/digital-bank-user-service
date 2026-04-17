@@ -17,7 +17,7 @@ def register_user(user):
     table.put_item(Item=item)
 
     return {
-        "message": "User created",
+        "message": "Usuario creado",
         "user_id": user_id
     }
 
@@ -29,10 +29,10 @@ def login_user(user):
     db_user = next((u for u in users if u["email"] == user.email), None)
 
     if not db_user:
-        return {"error": "User not found"}
+        return {"error": "Usuario no encontrado"}
 
     if not verify_password(user.password, db_user["password"]):
-        return {"error": "Invalid credentials"}
+        return {"error": "Credenciales inválidas"}
 
     token = create_access_token({
         "user_id": db_user["user_id"],

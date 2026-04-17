@@ -17,5 +17,5 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
         payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
         return payload
     except Exception as e:
-        print(f"Token validation error: {e}")
-        raise HTTPException(status_code=401, detail="Invalid token")
+        print(f"Error de validación del token: {e}")
+        raise HTTPException(status_code=401, detail="Token inválido")

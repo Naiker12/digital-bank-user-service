@@ -10,4 +10,4 @@ app.include_router(user_router, prefix="/users", tags=["Users"])
 
 @app.get("/")
 def root():
-    return {"message": "User Service Running"}
+    return {"message": "Servicio de Usuarios en ejecución"}
