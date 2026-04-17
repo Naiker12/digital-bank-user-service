@@ -52,15 +52,19 @@ Thumbs.db
 .coverage
 htmlcov/
 .terraform/
-terraform.tfstate
-terraform.tfstate.backup
-.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
 *.tfvars
 *.tfvars.json
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+.terraform.lock.hcl
+tfplan
+tfplan*
+*.zip
 
 # Serverless / AWS SAM
 .serverless/

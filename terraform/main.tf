@@ -1,8 +1,3 @@
-provider "aws" {
-  region = var.region
-}
-
-
 resource "aws_dynamodb_table" "user_table" {
   name           = "bank-users"
   billing_mode   = "PAY_PER_REQUEST"
@@ -28,12 +23,6 @@ resource "aws_s3_bucket" "user_avatars" {
   bucket = "bank-user-avatars-${random_id.bucket_suffix.hex}"
 }
 
-
-data "archive_file" "user_service_zip" {
-  type        = "zip"
-  source_dir  = "${path.module}/../deployment_package"
-  output_path = "${path.module}/user_service.zip"
-}
 
 # User Service: Register
 resource "aws_lambda_function" "register_user" {
