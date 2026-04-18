@@ -1,10 +1,9 @@
 fastapi
 uvicorn
-boto3
 pydantic
 passlib[bcrypt]
 python-multipart
 python-dotenv
-mangum
 email-validator
 PyJWT
+
