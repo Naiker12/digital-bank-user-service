@@ -22,6 +22,10 @@ class UserUpdate(BaseModel):
     address: str = None
     phone: str = None
 
+class UserAvatar(BaseModel):
+    image_data: str  # Base64 string
+    file_type: str = "image/png"
+
 @router.post("/register", status_code=201)
 async def register(user: UserRegister):
     try:
@@ -49,3 +53,10 @@ async def update_profile(user_id: str, data: UserUpdate):
     if not result:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return result
+
+@router.post("/profile/{user_id}/avatar")
+async def upload_avatar(user_id: str, data: UserAvatar):
+    try:
+        return user_service.upload_avatar(user_id, data.image_data, data.file_type)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

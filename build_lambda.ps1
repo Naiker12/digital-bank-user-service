@@ -18,9 +18,9 @@ New-Item -ItemType Directory -Path $BuildDir | Out-Null
 Write-Host "Installing bcrypt for Linux platform..."
 pip install bcrypt -t $BuildDir --no-cache-dir --platform manylinux2014_x86_64 --only-binary=:all: --implementation cp --python-version 3.13 2>&1 | Write-Host
 
-#  Install all other (pure Python) dependencies normally
-Write-Host "Installing pure Python dependencies..."
-pip install PyJWT pydantic email-validator python-dotenv python-multipart -t $BuildDir --no-cache-dir 2>&1 | Write-Host
+#  Install all other dependencies (ensuring Linux compatibility for binary wheels like pydantic-core)
+Write-Host "Installing dependencies for Linux platform..."
+pip install PyJWT pydantic email-validator python-dotenv python-multipart -t $BuildDir --no-cache-dir --platform manylinux2014_x86_64 --only-binary=:all: --implementation cp --python-version 3.13 2>&1 | Write-Host
 
 #  Remove passlib if it got pulled in
 Get-ChildItem -Path $BuildDir -Directory -Filter "passlib*" -ErrorAction SilentlyContinue | ForEach-Object {
